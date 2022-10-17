@@ -29,19 +29,19 @@ public class Main {
             Statement statement = conn.createStatement();
             System.out.println("Идет загрузка данных в базу...");
                 for (Player pl : playerList) {
-                    statement.executeUpdate(String.format("INSERT INTO Player (id, nickname)" +
+                    statement.executeUpdate(String.format("INSERT INTO public.\"Player\"" +
                             " VALUES (%d, '%s');", pl.getPlayerId(), pl.getNickname()));
 
                     for (Progresses prog : pl.getProgresses()) {
-                        statement.executeUpdate(String.format("INSERT INTO Progresses (id, playerId, resourceId, score, maxScore)" +
+                        statement.executeUpdate(String.format("INSERT INTO public.\"Progresses\"" +
                                 " VALUES (%d, %d, %d, %d, %d);", prog.getId(), prog.getPlayerId(), prog.getResourceId(), prog.getScore(), prog.getMaxScore()));
                     }
                     for (Currencies cur : pl.getCurrencies()) {
-                        statement.executeUpdate(String.format("INSERT INTO Currencies (id, playerId, resourceId, name, count)" +
+                        statement.executeUpdate(String.format("INSERT INTO public.\"Currencies\"" +
                                 " VALUES (%d, %d, %d, '%s', %d);", cur.getId(), cur.getPlayerId(), cur.getResourceId(), cur.getName(), cur.getCount()));
                     }
                     for (Items item : pl.getItems()) {
-                        statement.executeUpdate(String.format("INSERT INTO Items (id, playerId, resourceId, count, level)" +
+                        statement.executeUpdate(String.format("INSERT INTO public.\"Items\"" +
                                 " VALUES (%d, %d, %d, %d, %d);", item.getId(), item.getPlayerId(), item.getResourceId(), item.getCount(), item.getLevel()));
                     }
                 }
@@ -62,19 +62,23 @@ public class Main {
             System.out.println("Устанавливается соединение с базой данных...");
             conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
             System.out.println("Соединение установлено");
-            Statement statement = conn.createStatement();
+            Statement statement = conn.createStatement(
+                    ResultSet.TYPE_SCROLL_INSENSITIVE,
+                    ResultSet.CONCUR_READ_ONLY,
+                    ResultSet.HOLD_CURSORS_OVER_COMMIT
+            );
             System.out.println("Идет выгрузка данных из базы...");
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM Player");
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM public.\"Player\"");
 
             while(resultSet.next()) {
                 Player player = new Player();
-                int playerId = resultSet.getInt("id");
+                int playerId = resultSet.getInt("playerId");
                 player.setPlayerId(playerId);
                 System.out.println("pl" + playerId);
                 player.setNickname(resultSet.getString("nickname"));
 
                 ResultSet progressResult = statement.executeQuery(
-                        String.format("SELECT * FROM Progresses WHERE playerId=%d", playerId));
+                        String.format("SELECT * FROM public.\"Progresses\" WHERE \"Progresses\".\"playerId\"=%d", playerId));
                 while (progressResult.next()) {
                     player.addProgress(new Progresses(progressResult.getInt("id"),
                             progressResult.getInt("playerId"),
@@ -84,7 +88,7 @@ public class Main {
                 }
 
                 ResultSet currencyResult = statement.executeQuery(
-                        String.format("SELECT * FROM Currencies WHERE playerId=%d", playerId));
+                        String.format("SELECT * FROM public.\"Currencies\" WHERE \"Currencies\".\"playerId\"=%d", playerId));
                 while (currencyResult.next()) {
                     player.addCurrency(new Currencies(currencyResult.getInt("id"),
                             currencyResult.getInt("playerId"),
@@ -94,7 +98,7 @@ public class Main {
                 }
 
                 ResultSet itemResult = statement.executeQuery(
-                        String.format("SELECT * FROM Items WHERE playerId=%d", playerId));
+                        String.format("SELECT * FROM public.\"Items\" WHERE \"Items\".\"playerId\"=%d", playerId));
                 while (itemResult.next()) {
                     player.addItem(new Items(itemResult.getInt("id"),
                             itemResult.getInt("playerId"),
@@ -126,7 +130,7 @@ public class Main {
 
 
         System.out.println(players.size());
-        toDataBase(players);
+//        toDataBase(players);
         List<Player> players1 = fromDataBase();
         System.out.println(players1.size());
 
