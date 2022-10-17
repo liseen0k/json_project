@@ -74,10 +74,13 @@ public class Main {
                 Player player = new Player();
                 int playerId = resultSet.getInt("playerId");
                 player.setPlayerId(playerId);
-                System.out.println("pl" + playerId);
                 player.setNickname(resultSet.getString("nickname"));
 
-                ResultSet progressResult = statement.executeQuery(
+                Statement st2 = conn.createStatement(
+                        ResultSet.TYPE_SCROLL_INSENSITIVE,
+                        ResultSet.CONCUR_READ_ONLY
+                );
+                ResultSet progressResult = st2.executeQuery(
                         String.format("SELECT * FROM public.\"Progresses\" WHERE \"Progresses\".\"playerId\"=%d", playerId));
                 while (progressResult.next()) {
                     player.addProgress(new Progresses(progressResult.getInt("id"),
@@ -87,7 +90,11 @@ public class Main {
                             progressResult.getInt("maxScore")));
                 }
 
-                ResultSet currencyResult = statement.executeQuery(
+                Statement st3 = conn.createStatement(
+                        ResultSet.TYPE_SCROLL_INSENSITIVE,
+                        ResultSet.CONCUR_READ_ONLY
+                );
+                ResultSet currencyResult = st3.executeQuery(
                         String.format("SELECT * FROM public.\"Currencies\" WHERE \"Currencies\".\"playerId\"=%d", playerId));
                 while (currencyResult.next()) {
                     player.addCurrency(new Currencies(currencyResult.getInt("id"),
@@ -97,7 +104,11 @@ public class Main {
                             currencyResult.getInt("count")));
                 }
 
-                ResultSet itemResult = statement.executeQuery(
+                Statement st4 = conn.createStatement(
+                        ResultSet.TYPE_SCROLL_INSENSITIVE,
+                        ResultSet.CONCUR_READ_ONLY
+                );
+                ResultSet itemResult = st4.executeQuery(
                         String.format("SELECT * FROM public.\"Items\" WHERE \"Items\".\"playerId\"=%d", playerId));
                 while (itemResult.next()) {
                     player.addItem(new Items(itemResult.getInt("id"),
@@ -130,7 +141,7 @@ public class Main {
 
 
         System.out.println(players.size());
-//        toDataBase(players);
+        toDataBase(players);
         List<Player> players1 = fromDataBase();
         System.out.println(players1.size());
 
